@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Task Manager</title>
+</head>
+
+
+<header>
+    <h1>Gestión de Tareas del Hogar</h1>
+    <nav>
+        <ul id="menuPrincipal">
+            <li><a href="#pendientes">Tareas Pendientes</a></li>
+            <li><a href="#asignadas">Tareas Asignadas</a></li>
+            <li><a href="#creadas">Tareas Registradas</a></li>
+        </ul>
+    </nav>
+</header>
+
+<section id="calendario">
+    <h2>Asignar Tarea por Fecha</h2>
+   
+    <form id="date-task-form" method="post">
+        <label for="date">Selecciona la Fecha:</label>
+        <input type="date" id="date" required>
+
+        <label for="date-task-name">Nombre de la Tarea:</label>
+        <input type="text" id="date-task-name" required>
+
+        <label for="date-task-type">Tipo de Tarea:</label>
+        <select id="date-task-type" required>
+            <option value="pendiente">Pendientes</option>
+            <option value="asignada">Asignadas</option>
+            <option value="creada">Registradas</option>
+        </select>
+        
+        <button type="submit">Asignar Tarea</button>
+    </form>
+
+    <div id="calendario-tareas">
+        <h3>Tareas por Fecha</h3>
+
+        <div id="task-boxes">
+            <div id="pendientes" class="task-box">
+                <h4>Pendientes</h4>
+                <ul id="pendientes-list"></ul>
+            </div>
+            <div id="asignadas" class="task-box">
+                <h4>Asignadas</h4>
+                <ul id="asignadas-list"></ul>
+            </div>
+            <div id="creadas" class="task-box">
+                <h4>Registradas</h4>
+                <ul id="creadas-list"></ul>
+            </div>
+        </div>
+    </div>
+</section>
+    
+
+    <script src="Data.js"></script>
+    <script src="server.js"></script>
+    </body>
+
+
+
+<script>
+
+// URL del servidor donde está corriendo el back-end
+const API_URL = 'http://localhost:3000/tasks';
+
+// Obtener las tareas de MongoDB y mostrarlas
+async function fetchTasks() {
+  try {
+    const response = await fetch(API_URL);
+    const tasks = await response.json();
+
+    // Limpia las listas antes de mostrar las tareas
+    document.getElementById('pendientes-list').innerHTML = '';
+    document.getElementById('asignadas-list').innerHTML = '';
+    document.getElementById('creadas-list').innerHTML = '';
+
+    // Mostrar tareas en sus respectivas categorías
+    tasks.forEach(task => {
+      const listItem = document.createElement('li');
+      listItem.textContent = `${task.name} - ${task.date}`;
+
+      if (task.type === 'pendiente') {
+        document.getElementById('pendientes-list').appendChild(listItem);
+      } else if (task.type === 'asignada') {
+        document.getElementById('asignadas-list').appendChild(listItem);
+      } else {
+        document.getElementById('creadas-list').appendChild(listItem);
+      }
+    });
+  } catch (error) {
+    console.error('Error al obtener las tareas:', error);
+  }
+}
+
+// Enviar nueva tarea a MongoDB
+async function submitTask(event) {
+  event.preventDefault();
+
+  const date = document.getElementById('date').value;
+  const name = document.getElementById('date-task-name').value;
+  const type = document.getElementById('date-task-type').value;
+
+  const taskData = { date, name, type };
+
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(taskData)
+    });
+
+    if (response.ok) {
+      fetchTasks();  // Actualiza las tareas mostradas
+    }
+  } catch (error) {
+    console.error('Error al enviar la tarea:', error);
+  }
+}
+
+// Agregar evento al formulario
+document.getElementById('date-task-form').addEventListener('submit', submitTask);
+
+// Cargar las tareas al iniciar la página
+window.onload = fetchTasks;
+</script>
+
+</html>
